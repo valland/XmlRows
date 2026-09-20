@@ -98,7 +98,7 @@ kbd { font: 10px var(--ui); border: 1px solid currentColor; border-radius: 4px; 
 .brand { width: calc(var(--tree-w) + 5px); flex: none; padding: 24px 16px 0 22px; background: var(--sidebar); display: flex; align-items: center; gap: 10px; color: var(--sidebar-ink); }
 .brand, #tree-pane { color-scheme: inherit; }
 .brand-mark { display: block; width: 32px; height: 32px; object-fit: contain; flex: none; }
-.brand-name { font-size: 15px; letter-spacing: -.4px; white-space: nowrap; }
+.brand-name { font-size: 16px; font-weight: 500; letter-spacing: -.4px; white-space: nowrap; }
 .brand-name strong { font-weight: 650; }
 .document-bar { display: flex; align-items: center; gap: 13px; padding: 24px 22px 0; flex: 1; min-width: 0; }
 .titles { min-width: 0; flex: 1; }
@@ -267,7 +267,8 @@ table.rows td.rownum.row-selected { background: var(--select); color: var(--acce
 #about-dialog::backdrop { background: #0006; }
 .about-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
 .about-brand img { width: 56px; height: 56px; }
-.about-brand h2 { margin: 0; font-size: 20px; }
+.about-brand h2 { margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -.6px; }
+.about-brand h2 strong { font-weight: 650; }
 #about-version, .about-license { color: var(--muted); }
 #about-dialog details { margin: 12px 0; }
 #about-dialog summary { cursor: pointer; }
