@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<butikk navn="Nordvik">
+  <ordre id="1001" sum="250"><kunde>Kunde 1</kunde></ordre>
+  <ordre id="1002" sum="500"><kunde>Kunde 2</kunde></ordre>
+  <ordre id="1003" sum="750"><kunde>Kunde 3</kunde></ordre>
+  <ordre id="1004" sum="1000"><kunde>Kunde 4</kunde></ordre>
+  <ordre id="1005" sum="1250"><kunde>Kunde 5</kunde></ordre>
+  <retur id="R1" belop="99"><arsak>Skadet</arsak></retur>
+  <retur id="R2" belop="198"><arsak>Skadet</arsak></retur>
+  <ansatt navn="Ingrid" rolle="daglig leder"/>
+</butikk>

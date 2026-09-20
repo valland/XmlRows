@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+<GetOrdersResponse>
+<Result>
+<Data>
+<Payload>
+<Orders>
+<Order id="1"><Header><Meta><Ref code="R1"/></Meta></Header><Lines><Line n="1"><Sku>A1</Sku><Qty>2</Qty></Line></Lines></Order>
+<Order id="2"><Header><Meta><Ref code="R2"/></Meta></Header><Lines><Line n="1"><Sku>A2</Sku><Qty>3</Qty></Line></Lines></Order>
+<Order id="3"><Header><Meta><Ref code="R3"/></Meta></Header><Lines><Line n="1"><Sku>A3</Sku><Qty>4</Qty></Line></Lines></Order>
+<Order id="4"><Header><Meta><Ref code="R4"/></Meta></Header><Lines><Line n="1"><Sku>A4</Sku><Qty>5</Qty></Line></Lines></Order>
+<Order id="5"><Header><Meta><Ref code="R5"/></Meta></Header><Lines><Line n="1"><Sku>A5</Sku><Qty>6</Qty></Line></Lines></Order>
+<Order id="6"><Header><Meta><Ref code="R6"/></Meta></Header><Lines><Line n="1"><Sku>A6</Sku><Qty>7</Qty></Line></Lines></Order>
+<Order id="7"><Header><Meta><Ref code="R7"/></Meta></Header><Lines><Line n="1"><Sku>A7</Sku><Qty>1</Qty></Line></Lines></Order>
+<Order id="8"><Header><Meta><Ref code="R8"/></Meta></Header><Lines><Line n="1"><Sku>A8</Sku><Qty>2</Qty></Line></Lines></Order>
+<Order id="9"><Header><Meta><Ref code="R9"/></Meta></Header><Lines><Line n="1"><Sku>A9</Sku><Qty>3</Qty></Line></Lines></Order>
+<Order id="10"><Header><Meta><Ref code="R10"/></Meta></Header><Lines><Line n="1"><Sku>A10</Sku><Qty>4</Qty></Line></Lines></Order>
+<Order id="11"><Header><Meta><Ref code="R11"/></Meta></Header><Lines><Line n="1"><Sku>A11</Sku><Qty>5</Qty></Line></Lines></Order>
+<Order id="12"><Header><Meta><Ref code="R12"/></Meta></Header><Lines><Line n="1"><Sku>A12</Sku><Qty>6</Qty></Line></Lines></Order>
+<Order id="13"><Header><Meta><Ref code="R13"/></Meta></Header><Lines><Line n="1"><Sku>A13</Sku><Qty>7</Qty></Line></Lines></Order>
+<Order id="14"><Header><Meta><Ref code="R14"/></Meta></Header><Lines><Line n="1"><Sku>A14</Sku><Qty>1</Qty></Line></Lines></Order>
+<Order id="15"><Header><Meta><Ref code="R15"/></Meta></Header><Lines><Line n="1"><Sku>A15</Sku><Qty>2</Qty></Line></Lines></Order>
+<Order id="16"><Header><Meta><Ref code="R16"/></Meta></Header><Lines><Line n="1"><Sku>A16</Sku><Qty>3</Qty></Line></Lines></Order>
+<Order id="17"><Header><Meta><Ref code="R17"/></Meta></Header><Lines><Line n="1"><Sku>A17</Sku><Qty>4</Qty></Line></Lines></Order>
+<Order id="18"><Header><Meta><Ref code="R18"/></Meta></Header><Lines><Line n="1"><Sku>A18</Sku><Qty>5</Qty></Line></Lines></Order>
+<Order id="19"><Header><Meta><Ref code="R19"/></Meta></Header><Lines><Line n="1"><Sku>A19</Sku><Qty>6</Qty></Line></Lines></Order>
+<Order id="20"><Header><Meta><Ref code="R20"/></Meta></Header><Lines><Line n="1"><Sku>A20</Sku><Qty>7</Qty></Line></Lines></Order>
+<Order id="21"><Header><Meta><Ref code="R21"/></Meta></Header><Lines><Line n="1"><Sku>A21</Sku><Qty>1</Qty></Line></Lines></Order>
+<Order id="22"><Header><Meta><Ref code="R22"/></Meta></Header><Lines><Line n="1"><Sku>A22</Sku><Qty>2</Qty></Line></Lines></Order>
+<Order id="23"><Header><Meta><Ref code="R23"/></Meta></Header><Lines><Line n="1"><Sku>A23</Sku><Qty>3</Qty></Line></Lines></Order>
+<Order id="24"><Header><Meta><Ref code="R24"/></Meta></Header><Lines><Line n="1"><Sku>A24</Sku><Qty>4</Qty></Line></Lines></Order>
+<Order id="25"><Header><Meta><Ref code="R25"/></Meta></Header><Lines><Line n="1"><Sku>A25</Sku><Qty>5</Qty></Line></Lines></Order>
+<Order id="26"><Header><Meta><Ref code="R26"/></Meta></Header><Lines><Line n="1"><Sku>A26</Sku><Qty>6</Qty></Line></Lines></Order>
+<Order id="27"><Header><Meta><Ref code="R27"/></Meta></Header><Lines><Line n="1"><Sku>A27</Sku><Qty>7</Qty></Line></Lines></Order>
+<Order id="28"><Header><Meta><Ref code="R28"/></Meta></Header><Lines><Line n="1"><Sku>A28</Sku><Qty>1</Qty></Line></Lines></Order>
+<Order id="29"><Header><Meta><Ref code="R29"/></Meta></Header><Lines><Line n="1"><Sku>A29</Sku><Qty>2</Qty></Line></Lines></Order>
+</Orders></Payload></Data></Result></GetOrdersResponse></soap:Body></soap:Envelope>

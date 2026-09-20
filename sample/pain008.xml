@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.02">
+  <CstmrDrctDbtInitn>
+    <PmtInf>
+      <PmtInfId>KOMPLETTPROD_NOR-P008-000080_00001</PmtInfId>
+      <PmtMtd>DD</PmtMtd>
+      <PmtTpInf><SvcLvl><Cd>NURG</Cd></SvcLvl><LclInstrm><Cd>CORE</Cd></LclInstrm></PmtTpInf>
+      <ReqdColltnDt>2026-02-20</ReqdColltnDt>
+      <Cdtr></Cdtr>
+      <CdtrAcct><Id><Othr><Id>60050774220</Id><SchmeNm><Cd>BBAN</Cd></SchmeNm></Othr></Id></CdtrAcct>
+      <CdtrAgt><FinInstnId><BIC>NDEANOKK</BIC></FinInstnId></CdtrAgt>
+      <DrctDbtTxInf>
+        <PmtId><InstrId>KOMPLETT_NOR-1304001-260220-001</InstrId><EndToEndId>KOMPLETT_NOR-1304001-260220-001_E</EndToEndId></PmtId>
+        <InstdAmt Ccy="NOK">3671.22</InstdAmt>
+        <DbtrAgt><FinInstnId><Othr><Id>NOTPROVIDED</Id></Othr></FinInstnId></DbtrAgt>
+        <Dbtr><Id><PrvtId>
+          <Othr><Id>102932112013040019</Id><SchmeNm><Cd>CUST</Cd></SchmeNm></Othr>
+          <Othr><Id>16096841896</Id><SchmeNm><Cd>SOSE</Cd></SchmeNm></Othr>
+        </PrvtId></Id></Dbtr>
+        <DbtrAcct><Id><Othr><Id>NOTPROVIDED</Id></Othr></Id></DbtrAcct>
+        <RmtInf><Strd><CdtrRefInf><Tp><CdOrPrtry><Cd>SCOR</Cd></CdOrPrtry></Tp><Ref>102932112013040019</Ref></CdtrRefInf></Strd></RmtInf>
+      </DrctDbtTxInf>
+    </PmtInf>
+    <PmtInf>
+      <PmtInfId>KOMPLETTPROD_NOR-P008-000080_00002</PmtInfId>
+      <PmtMtd>DD</PmtMtd>
+      <PmtTpInf><SvcLvl><Cd>NURG</Cd></SvcLvl><LclInstrm><Cd>CORE</Cd></LclInstrm></PmtTpInf>
+      <ReqdColltnDt>2026-02-20</ReqdColltnDt>
+      <Cdtr></Cdtr>
+      <CdtrAcct><Id><Othr><Id>60050774220</Id><SchmeNm><Cd>BBAN</Cd></SchmeNm></Othr></Id></CdtrAcct>
+      <CdtrAgt><FinInstnId><BIC>NDEANOKK</BIC></FinInstnId></CdtrAgt>
+      <DrctDbtTxInf>
+        <PmtId><InstrId>KOMPLETT_NOR-1305632-260220-001</InstrId><EndToEndId>KOMPLETT_NOR-1305632-260220-001_E</EndToEndId></PmtId>
+        <InstdAmt Ccy="NOK">8896.88</InstdAmt>
+        <DbtrAgt><FinInstnId><Othr><Id>NOTPROVIDED</Id></Othr></FinInstnId></DbtrAgt>
+        <Dbtr><Id><PrvtId>
+          <Othr><Id>102934541013056328</Id><SchmeNm><Cd>CUST</Cd></SchmeNm></Othr>
+          <Othr><Id>28067230517</Id><SchmeNm><Cd>SOSE</Cd></SchmeNm></Othr>
+        </PrvtId></Id></Dbtr>
+        <DbtrAcct><Id><Othr><Id>NOTPROVIDED</Id></Othr></Id></DbtrAcct>
+        <RmtInf><Strd><CdtrRefInf><Tp><CdOrPrtry><Cd>SCOR</Cd></CdOrPrtry></Tp><Ref>102934541013056328</Ref></CdtrRefInf></Strd></RmtInf>
+      </DrctDbtTxInf>
+    </PmtInf>
+  </CstmrDrctDbtInitn>
+</Document>

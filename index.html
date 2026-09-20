@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>XMLRows</title>
+    <link rel="icon" type="image/png" href="/src-tauri/icons/32x32.png" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="toolbar" data-tauri-drag-region>
+        <div class="brand" data-tauri-drag-region>
+          <img class="brand-mark" src="/src-tauri/icons/128x128.png" alt="" aria-hidden="true" />
+          <span class="brand-name">XML<strong>Rows</strong></span>
+        </div>
+        <div class="document-bar" data-tauri-drag-region>
+          <div class="titles" data-tauri-drag-region>
+            <div class="filename-line"><span id="filename">Untitled.xml</span><span id="dirty-mark" title="Unsaved changes" hidden></span></div>
+            <span id="filemeta"></span>
+          </div>
+          <div class="actions">
+            <button id="btn-save" title="Save document (⌘S)"><span data-icon="save"></span><span>Save</span></button>
+            <button id="btn-open" class="primary-button" title="Open an XML file (⌘O)"><span data-icon="folder"></span>Open file</button>
+            <span class="action-divider"></span>
+            <button id="btn-about" aria-haspopup="dialog">About</button>
+            <button id="btn-theme" class="icon-button" aria-label="Switch color theme" title="Switch color theme"><span data-icon="moon"></span></button>
+          </div>
+        </div>
+      </header>
+
+      <aside id="tree-pane" aria-label="Document structure">
+<div class="sidebar-heading"><h1 id="structure-title">Tables</h1></div>
+        <div class="tree-options"><label class="toggle"><input type="checkbox" id="tables-only" checked /> Tables only</label></div>
+        <div id="tree" class="scroller" tabindex="0" aria-label="XML elements"></div>
+      </aside>
+
+      <div id="vsplit" class="splitter vertical" title="Drag to resize structure panel"></div>
+
+      <main id="main-pane">
+        <div class="source-toolbar">
+          <div class="pane-label"><span data-icon="code"></span><span>XML source</span></div>
+          <div class="source-actions">
+            <button id="btn-search" title="Search XML (⌘F)"><span data-icon="search"></span><span>Search</span></button>
+            <button id="btn-format" title="Format indentation (⇧⌘I)"><span data-icon="format"></span><span>Format XML</span></button>
+            <button id="btn-locate" hidden title="Find the cursor's element in the tree (⌘L)"><span data-icon="locate"></span><span>Find in tree</span></button>
+            <span class="action-divider"></span>
+            <button id="btn-detail"  aria-expanded="true" aria-controls="detail" title="Show or hide table (⌘J)"><span data-icon="table"></span><span id="detail-toggle-label">Hide table</span></button>
+          </div>
+        </div>
+        <nav id="breadcrumb" aria-label="Selected element path"></nav>
+        <div id="editor" aria-label="XML source editor"></div>
+        <div id="hsplit" class="splitter horizontal" title="Drag to resize table panel"></div>
+        <section id="detail" aria-label="Selected element data">
+          <div id="table-options-home" hidden>
+            <span id="detail-title">No element selected</span>
+            <details id="table-options" class="table-options">
+              <summary><span data-icon="sliders"></span>Settings<span data-icon="chevron"></span></summary>
+              <div class="options-popover">
+<div class="ctl"><label for="opt-depth" title="Include values from this many levels of child elements">Child levels</label><select id="opt-depth"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></div>
+                <div class="ctl"><label for="opt-rows">Maximum rows</label><select id="opt-rows"><option value="500">500</option><option value="2000" selected>2,000</option><option value="10000">10,000</option><option value="50000">50,000</option><option value="200000">200,000</option></select></div>
+                <div class="ctl"><label for="opt-cols">Maximum columns</label><select id="opt-cols"><option value="0">All</option><option>30</option><option selected>60</option><option>120</option><option>250</option></select></div>
+              </div>
+            </details>
+          </div>
+          <div id="detail-body" class="scroller" tabindex="0"></div>
+        </section>
+      </main>
+
+      <footer id="statusbar"><button id="health" class="health" title="Document diagnostics"></button><span class="footer-divider"></span><span id="status" role="status" aria-live="polite"></span><span class="footer-spacer"></span><span class="encoding">UTF-8</span></footer>
+    </div>
+    <dialog id="about-dialog" aria-labelledby="about-title">
+      <div class="about-brand"><img src="/src-tauri/icons/128x128.png" alt="" /><div><h2 id="about-title">XMLRows</h2><span id="about-version"></span></div></div>
+      <p>Created by <strong>Martin Valland</strong></p>
+      <p>© 2026 Bråtet Software AS</p>
+      <p class="about-license">Free and open source · MIT License</p>
+      <details><summary>License terms</summary><pre id="about-license-text" tabindex="0"></pre></details>
+      <details><summary>Open-source notices</summary><pre id="about-notices-text" tabindex="0"></pre></details>
+      <form method="dialog" class="actions"><button autofocus>Close</button></form>
+    </dialog>
+    <dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
+      <form method="dialog">
+        <h2 id="unsaved-title">Save changes before opening another file?</h2>
+        <p>Your current document has unsaved changes.</p>
+        <div class="actions">
+          <button value="cancel" autofocus>Cancel</button>
+          <button value="discard">Discard changes</button>
+          <button value="save" class="primary-button">Save changes</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

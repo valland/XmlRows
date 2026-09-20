@@ -1,0 +1,2 @@
+Standard Mozilla Public License 2.0 text: https://www.mozilla.org/MPL/2.0/
+Selectors source: https://crates.io/api/v1/crates/selectors/0.36.1/download

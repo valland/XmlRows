@@ -1,0 +1,29 @@
+[package]
+name = "xmlrows"
+version = "0.1.0"
+license = "MIT"
+authors = ["Martin Valland"]
+description = "Source-level XML viewer with linked tree, table and text"
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "xmlrows_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+xmlcore = { path = "../crates/xmlcore" }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

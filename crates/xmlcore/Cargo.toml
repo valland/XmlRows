@@ -1,0 +1,12 @@
+[package]
+name = "xmlcore"
+version = "0.1.0"
+edition = "2021"
+description = "Position-preserving, error-tolerant XML model for source-level editors"
+license = "MIT"
+
+# Deliberately zero dependencies. This crate must stay buildable as a plain
+# library, as a wasm32 target, and inside src-tauri without pulling anything in.
+[dependencies]
+
+[dev-dependencies]
