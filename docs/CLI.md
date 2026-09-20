@@ -2,11 +2,12 @@
 
 The same engine without the desktop. Use it to check whether a document parses,
 see what shape it has, and pull a repeated group out as CSV.
+Run the following commands from the repository root.
 
 ```bash
 cd crates/xmlcore
 cargo run --release --example xmlrows -- --help
-cargo run --release --example xmlrows -- ../../sample/orders-mid.xml
+cargo run --release --example xmlrows -- ../../docs/sample-orders.xml
 ```
 
 For anything beyond a quick look, build it once and call it directly, so cargo
@@ -65,8 +66,8 @@ xmlrows: no child group 'customer'. Available: order, refund, staff
 `--list` shows the choices before you commit. You only need `--group` when an
 element has several kinds of children and you don't want the biggest set.
 
-| | |
-|---|---|
+| Option | Purpose |
+| --- | --- |
 | `-c, --csv` | Write the chosen group as CSV |
 | `-o, --output <FILE>` | Write to a file instead of stdout |
 | `-l, --list` | List the groups under the selected element, then exit |
@@ -80,7 +81,7 @@ element has several kinds of children and you don't want the biggest set.
 | `--expand-repeated <N>` | Occurrences of a repeated child to expand into columns (default 8; minimum 1) |
 | `--sort <COLUMN>` | Sort by column key; numeric values sort as numbers |
 | `--desc` | Sort descending |
-| `-h, --help` / `-V, --version` | |
+| `-h, --help` / `-V, --version` | Show help / version |
 
 ### Examples
 
@@ -97,8 +98,8 @@ xmlrows --depth 5 deep-soap.xml
 # Export everything, biggest orders first
 xmlrows --csv --sort @total --desc -o totals.csv orders.xml
 
-# Pipe it somewhere
-xmlrows --csv --quiet orders.xml | duckdb -c "..."
+# Preview the beginning of an export
+xmlrows --csv --quiet orders.xml | head -n 5
 ```
 
 CSV quotes values containing a comma, quote or newline and doubles embedded
@@ -107,9 +108,8 @@ columns and complete cell values. Explicit `--rows`, `--cols` and `--cell-len`
 limits still apply. The depth limit (3) and repeated-child limit (8) remain;
 raise them with `--depth` and `--expand-repeated` when needed.
 
-Root attributes now use `@` in column keys: an attribute `id` becomes `@id`,
-while a child `<id>` stays `id`. Update existing `--sort id` commands to
-`--sort @id` when sorting an attribute. Nested attributes retain keys such as
+Attributes on a row element use `@` in column keys: an attribute `id` becomes `@id`,
+while a child `<id>` stays `id`. Use `--sort @id` when sorting that attribute. Nested attributes retain keys such as
 `Header/Meta/Ref@code`. Exact sort keys take priority; an ambiguous
 case-insensitive match is an error instead of silently choosing a column.
 

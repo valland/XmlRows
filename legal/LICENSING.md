@@ -1,15 +1,20 @@
-# Lisens for XMLRows
+# XMLRows licensing
 
-XMLRows er gratis og åpen kildekode under MIT-lisensen i [LICENSE.txt](../LICENSE.txt).
-Utviklet av Martin Valland. Copyright © 2026 Bråtet Software AS.
+XMLRows is free and open-source software under the MIT License in
+[LICENSE.txt](../LICENSE.txt).
+Created by Martin Valland. Copyright © 2026 Bråtet Software AS.
 
-- Alle kan bruke, kopiere, endre og distribuere programmet, også kommersielt.
-- Copyright-teksten og lisensvilkårene må følge med kopier eller vesentlige deler.
-- Programmet leveres uten garanti, som beskrevet i lisensen.
-- Det kreves ingen betaling, abonnement eller aktivering.
+- Anyone may use, copy, modify and distribute the software, including commercially.
+- The copyright and permission notices must accompany copies or substantial
+  portions of the software.
+- The software is provided without warranty, as described in the license.
+- No payment, subscription or activation is required.
 
-`xmlcore` bruker også MIT. Tredjepartskomponenter beholder sine egne lisenser;
-deres vilkår og notices følger med i About-vinduet og i distribusjonen.
+`xmlcore` also uses the MIT License. Third-party components retain their own
+licenses; their terms and notices are available in the About dialog and
+included in the application distribution.
 
-MIT tillater kommersiell bruk og salg av kopier. Gratis og åpen kildekode
-innebærer derfor ikke et forbud mot at andre bruker programmet kommersielt.
+MIT permits commercial use and the sale of copies. Free and open-source
+software does not imply a restriction on commercial use by others.
+
+This page is an overview. The full terms are in [LICENSE.txt](../LICENSE.txt).

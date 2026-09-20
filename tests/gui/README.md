@@ -38,3 +38,7 @@ corresponding table cell.
 Row duplication covers exact XML preservation (namespaces, comments and CDATA),
 selection in sorted tables, insertion immediately after the original, editing
 only the new row, isolated undo/redo, self-closing rows and display-limit edges.
+
+The suite also checks that Find in tree is available only in structure mode,
+and that About displays author credit, copyright, the MIT License and
+loadable dependency notices.
