@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orders shop="Nordvik" generated="2026-09-10">
+  <order id="100001" total="3973.94" currency="NOK">
+    <customer>Kåre Ødegård</customer>
+    <city>Trondheim</city>
+  </order>
+  <order id="100002" total="8213.29" currency="NOK">
+    <customer>Ingrid Solberg</customer>
+    <city>Oslo</city>
+  </order>
+  <order id="100003" total="5842.5" currency="NOK">
+    <customer>Mei Lin</customer>
+    <city>Oslo</city>
+  </order>
+  <order id="100004" total="421.74" currency="NOK">
+    <customer>Kåre Ødegård</customer>
+    <city>Stavanger</city>
+  </order>
+  <order id="100005" total="743.43" currency="NOK">
+    <customer>Jonas Haugen</customer>
+    <city>Tromsø</city>
+  </order>
+  <order id="100006" total="4269.15" currency="NOK">
+    <customer>Åse Lien</customer>
+    <city>Oslo</city>
+  </order>
+  <order id="100007" total="1279.72" currency="NOK">
+    <customer>Åse Lien</customer>
+    <city>Kristiansand</city>
+  </order>
+  <order id="100008" total="6286.31" currency="NOK">
+    <customer>Petter Bråten</customer>
+    <city>Bergen</city>
+  </order>
+  <order id="100009" total="5869.87" currency="NOK">
+    <customer>Åse Lien</customer>
+    <city>Oslo</city>
+  </order>
+  <order id="100010" total="512.08" currency="NOK">
+    <customer>Kåre Ødegård</customer>
+    <city>Oslo</city>
+  </order>
+  <order id="100011" total="2928.01" currency="NOK">
+    <customer>Kåre Ødegård</customer>
+    <city>Kristiansand</city>
+  </order>
+  <order id="100012" total="1219.97" currency="NOK">
+    <customer>Åse Lien</customer>
+    <city>Bergen</city>
+  </order>
+  <order id="100013" total="8162.11" currency="NOK">
+    <customer>Åse Lien</customer>
+    <city>Trondheim</city>
+  </order>
+  <order id="100014" total="5830.69" currency="NOK">
+    <customer>Ingrid Solberg</customer>
+    <city>Bergen</city>
+  </order>
+  <order id="100015" total="3751.0" currency="NOK">
+    <customer>Kåre Ødegård</customer>
+    <city>Ålesund</city>
+  </order>
+  <order id="100016" total="673.19" currency="NOK">
+    <customer>Petter Bråten</customer>
+    <city>Stavanger</city>
+  </order>
+  <order id="100017" total="2096.44" currency="NOK">
+    <customer>Åse Lien</customer>
+    <city>Oslo</city>
+  </order>
+  <order id="100018" total="4299.7" currency="NOK">
+    <customer>Åse Lien</customer>
+    <city>Ålesund</city>
+  </order>
+  <order id="100019" total="5870.07" currency="NOK">
+    <customer>Jonas Haugen</customer>
+    <city>Trondheim</city>
+  </order>
+  <order id="100020" total="3028.98" currency="NOK">
+    <customer>Mei Lin</customer>
+    <city>Tromsø</city>
+  </order>
+  <order id="100021" total="6997.7" currency="NOK">
+    <customer>Kåre Ødegård</customer>
+    <city>Kristiansand</city>
+  </order>
+  <order id="100022" total="5759.35" currency="NOK">
+    <customer>Ingrid Solberg</customer>
+    <city>Bergen</city>
+  </order>
+</orders>
