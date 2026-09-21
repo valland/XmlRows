@@ -23,7 +23,7 @@ import type { Diagnostic, Range } from "./ipc";
  *  `problem` marks parse errors.
  */
 export const setScope = StateEffect.define<Range | null>();
-export const setFocus = StateEffect.define<Range | null>();
+export const setFocus = StateEffect.define<Range | Range[] | null>();
 export const setProblems = StateEffect.define<Diagnostic[]>();
 
 const scopeMark = Decoration.mark({ class: "cm-scope" });
@@ -57,7 +57,26 @@ function rangeField(
 }
 
 const scopeField = rangeField(setScope, scopeMark);
-const focusField = rangeField(setFocus, focusMark);
+const focusField = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update(value, tr) {
+    value = value.map(tr.changes);
+    for (const e of tr.effects) {
+      if (e.is(setFocus)) {
+        const ranges = Array.isArray(e.value) ? e.value : e.value ? [e.value] : [];
+        const max = tr.state.doc.length;
+        value = Decoration.set(
+          ranges
+            .filter((r) => r.end > r.start && r.start < max)
+            .map((r) => focusMark.range(Math.min(r.start, max), Math.min(r.end, max))),
+          true,
+        );
+      }
+    }
+    return value;
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 
 const problemField = StateField.define<DecorationSet>({
   create: () => Decoration.none,

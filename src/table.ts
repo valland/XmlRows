@@ -12,20 +12,18 @@ interface Sort {
   ascending: boolean;
 }
 
-/** A rectangular block of cells, anchored where you first clicked. */
+/** The single selected table cell. Rows have their own multi-selection model. */
 interface Pick {
   group: number;
-  r0: number;
-  c0: number;
-  r1: number;
-  c1: number;
+  row: number;
+  col: number;
 }
 
-function span(p: Pick) {
-  return {
-    rows: [Math.min(p.r0, p.r1), Math.max(p.r0, p.r1)] as const,
-    cols: [Math.min(p.c0, p.c1), Math.max(p.c0, p.c1)] as const,
-  };
+/** Row selections use XML node IDs so they survive table sorting. */
+interface RowSelection {
+  group: number;
+  nodes: Set<number>;
+  anchor: number;
 }
 
 /** Renders the selected element's attributes and one grid per repeated child
@@ -37,12 +35,12 @@ export class DetailPane {
   private order = new Map<number, number[]>();
   private focused: { group: number; row: number; col: number } | null = null;
   private pick: Pick | null = null;
-  private selectedRow: { group: number; node: number } | null = null;
+  private selectedRows: RowSelection | null = null;
 
   constructor(
     private host: HTMLElement,
     private hooks: {
-      onHighlight: (r: Range, exact: boolean) => void;
+      onHighlight: (r: Range | Range[], exact: boolean) => void;
       readValue: (start: number, end: number) => string;
       onDuplicate: (row: Range, rowIndex: number) => Promise<void>;
       onEdit: (start: number, end: number, value: string) => Promise<void>;
@@ -55,6 +53,12 @@ export class DetailPane {
   ) {
     this.host.addEventListener("click", (e) => this.onClick(e));
     this.host.addEventListener("dblclick", (e) => this.onDblClick(e));
+    document.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement | null;
+      if (this.selectedRows && !target?.closest("table.rows") && !target?.closest("[data-copy]")) {
+        this.clearRowSelection();
+      }
+    });
     // Capture phase, because the scroll happens on a descendant. Repaint only
     // the group that moved rather than every grid on the page.
     this.host.addEventListener(
@@ -91,7 +95,7 @@ export class DetailPane {
       this.order.clear();
       this.focused = null;
       this.pick = null;
-      this.selectedRow = null;
+      this.selectedRows = null;
     }
     this.render();
   }
@@ -108,8 +112,8 @@ export class DetailPane {
       const row = rows[ri];
       const ci = row.cells.findIndex((c) => c && pos >= c.start && pos <= c.end);
       this.focused = ci < 0 ? null : { group: gi, row: ri, col: ci };
-      this.selectedRow = ci < 0 ? { group: gi, node: row.node } : null;
-      this.pick = { group: gi, r0: ri, r1: ri, c0: ci < 0 ? 0 : ci, c1: ci < 0 ? group.columns.length - 1 : ci };
+      this.selectedRows = ci < 0 ? { group: gi, nodes: new Set([row.node]), anchor: row.node } : null;
+      this.pick = ci < 0 ? null : { group: gi, row: ri, col: ci };
       const scroll = this.host.querySelector<HTMLElement>(`[data-scroll="${gi}"]`);
       if (scroll) {
         scroll.scrollTop = Math.max(0, ri * ROW_H - scroll.clientHeight / 2 + ROW_H);
@@ -123,7 +127,7 @@ export class DetailPane {
 
   clear() {
     this.detail = null;
-    this.selectedRow = null;
+    this.selectedRows = null;
     this.pick = null;
     this.focused = null;
     this.parkSettings();
@@ -191,7 +195,7 @@ export class DetailPane {
       </div>
       <div class="grid-scroll scroller" data-scroll="${gi}">
         <table class="rows">
-          <thead><tr><th class="rownum" title="Click a row number to highlight its XML">#</th>${head}</tr></thead>
+          <thead><tr><th class="rownum" title="Click to select a row · Shift-click for a range · Cmd/Ctrl-click to add or remove">#</th>${head}</tr></thead>
           <tbody data-body="${gi}"></tbody>
         </table>
       </div>
@@ -263,14 +267,14 @@ export class DetailPane {
               this.focused.group === gi &&
               this.focused.row === i &&
               this.focused.col === ci;
-            const p = this.inPick(gi, i, ci) && !f ? " picked" : "";
+            const p = (this.inPick(gi, i, ci) || this.isRowNodeSelected(gi, r.node)) && !f ? " picked" : "";
             return c
               ? `<td class="cell${f ? " focused" : ""}${p}" data-cell="${gi}:${i}:${ci}">${esc(c.value)}</td>`
               : `<td class="cell empty-cell${p}" data-cell="${gi}:${i}:${ci}"></td>`;
           })
           .join("");
         out.push(
-          `<tr data-row="${gi}:${i}"><td class="rownum" data-highlight-row="${gi}:${i}">${i + 1}</td>${cells}</tr>`,
+          `<tr data-row="${gi}:${i}" data-node="${r.node}"><td class="rownum" data-highlight-row="${gi}:${i}">${i + 1}</td>${cells}</tr>`,
         );
       }
 
@@ -300,8 +304,9 @@ export class DetailPane {
     const duplicate = target.closest<HTMLButtonElement>("[data-duplicate]");
     if (duplicate) {
       const gi = Number(duplicate.dataset.duplicate);
-      if (!duplicate.disabled && this.pick?.group === gi && this.pick.r0 === this.pick.r1) {
-        const row = this.rowsOf(gi)[this.pick.r0];
+      const rowIndex = this.duplicateRowIndex(gi);
+      if (!duplicate.disabled && rowIndex !== null) {
+        const row = this.rowsOf(gi)[rowIndex];
         const index = this.detail!.groups[gi].rows.findIndex((r) => r.node === row.node);
         duplicate.disabled = true;
         void this.hooks.onDuplicate(row, index).catch((err) => this.hooks.onStatus(String(err)))
@@ -311,7 +316,8 @@ export class DetailPane {
     }
     const copyBtn = target.closest<HTMLElement>("[data-copy]");
     if (copyBtn) {
-      void this.copyGroup(Number(copyBtn.dataset.copy), false);
+      const gi = Number(copyBtn.dataset.copy);
+      void this.copyGroup(gi, this.selectedRows?.group === gi && this.selectedRows.nodes.size > 0);
       return;
     }
     if (target.closest("[data-copy-attrs]")) {
@@ -332,11 +338,28 @@ export class DetailPane {
       const row = this.rowsOf(gi)[ri];
       if (row) {
         this.focused = null;
-        this.selectedRow = { group: gi, node: row.node };
-        this.pick = { group: gi, r0: ri, r1: ri, c0: 0, c1: this.detail!.groups[gi].columns.length - 1 };
+        this.pick = null;
+        const current = this.selectedRows?.group === gi ? this.selectedRows : null;
+        const additive = e.metaKey || e.ctrlKey;
+        if (e.shiftKey && current) {
+          const rows = this.rowsOf(gi);
+          const anchor = rows.findIndex((candidate) => candidate.node === current.anchor);
+          const from = anchor < 0 ? ri : Math.min(anchor, ri);
+          const to = anchor < 0 ? ri : Math.max(anchor, ri);
+          const nodes = additive ? new Set(current.nodes) : new Set<number>();
+          for (let i = from; i <= to; i++) nodes.add(rows[i].node);
+          this.selectedRows = { group: gi, nodes, anchor: current.anchor };
+        } else if (additive) {
+          const nodes = new Set(current?.nodes);
+          if (nodes.has(row.node)) nodes.delete(row.node);
+          else nodes.add(row.node);
+          this.selectedRows = nodes.size ? { group: gi, nodes, anchor: row.node } : null;
+        } else {
+          this.selectedRows = { group: gi, nodes: new Set([row.node]), anchor: row.node };
+        }
         this.host.focus({ preventScroll: true });
         this.paintSelection();
-        this.hooks.onHighlight({ start: row.start, end: row.end }, true);
+        this.highlightSelectedRows(gi, row.node);
       }
       return;
     }
@@ -351,12 +374,8 @@ export class DetailPane {
     const cell = target.closest<HTMLElement>("[data-cell]");
     if (cell) {
       const [gi, ri, ci] = cell.dataset.cell!.split(":").map(Number);
-      if (e.shiftKey && this.pick && this.pick.group === gi) {
-        this.pick = { ...this.pick, r1: ri, c1: ci };
-      } else {
-        this.pick = { group: gi, r0: ri, c0: ci, r1: ri, c1: ci };
-      }
-      this.selectedRow = null;
+      this.pick = { group: gi, row: ri, col: ci };
+      this.selectedRows = null;
       this.focused = { group: gi, row: ri, col: ci };
       // Focus the pane so ⌘C reaches this table instead of the editor.
       this.host.focus({ preventScroll: true });
@@ -375,17 +394,26 @@ export class DetailPane {
   private paintSelection() {
     this.host.querySelectorAll<HTMLButtonElement>("[data-duplicate]").forEach((button) => {
       button.disabled = this.hooks.isReadOnly() || !!this.host.querySelector(".cell-edit") ||
-        this.pick?.group !== Number(button.dataset.duplicate) || this.pick.r0 !== this.pick.r1;
+        this.duplicateRowIndex(Number(button.dataset.duplicate)) === null;
     });
     this.host.querySelectorAll<HTMLElement>("[data-cell]").forEach((el) => {
       const [group, row, col] = el.dataset.cell!.split(":").map(Number);
       const focused = this.focused?.group === group && this.focused.row === row && this.focused.col === col;
+      const node = Number(el.closest<HTMLElement>("[data-node]")?.dataset.node);
       el.classList.toggle("focused", focused);
-      el.classList.toggle("picked", !focused && this.inPick(group, row, col));
+      el.classList.toggle("picked", !focused && (this.inPick(group, row, col) || this.isRowNodeSelected(group, node)));
     });
     this.host.querySelectorAll<HTMLElement>("[data-highlight-row]").forEach((el) => {
-      const [group, row] = el.dataset.highlightRow!.split(":").map(Number);
-      el.classList.toggle("row-selected", this.selectedRow?.group === group && this.pick?.r0 === row);
+      const group = Number(el.dataset.highlightRow!.split(":")[0]);
+      const node = Number(el.closest<HTMLElement>("[data-node]")?.dataset.node);
+      el.classList.toggle("row-selected", this.isRowNodeSelected(group, node));
+    });
+    this.host.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((button) => {
+      const group = Number(button.dataset.copy);
+      const selected = this.selectedRows?.group === group ? this.selectedRows.nodes.size : 0;
+      button.title = selected
+        ? `Copy ${selected.toLocaleString()} selected ${selected === 1 ? "row" : "rows"}`
+        : `Copy all ${this.detail!.groups[group].total.toLocaleString()} rows, including rows beyond the display limit`;
     });
   }
 
@@ -411,33 +439,60 @@ export class DetailPane {
     if (focused && focusedNode !== undefined) {
       const row = this.rowsOf(gi).findIndex((r) => r.node === focusedNode);
       this.focused = row < 0 ? null : { group: gi, row, col: focused.col };
-      this.pick = row < 0 ? null : { group: gi, r0: row, r1: row, c0: focused.col, c1: focused.col };
-    }
-    if (this.selectedRow?.group === gi) {
-      const row = this.rowsOf(gi).findIndex((r) => r.node === this.selectedRow!.node);
-      this.pick = row < 0 ? null : { group: gi, r0: row, r1: row, c0: 0, c1: this.detail.groups[gi].columns.length - 1 };
-      if (row < 0) this.selectedRow = null;
+      this.pick = row < 0 ? null : { group: gi, row, col: focused.col };
     }
     this.render();
   }
 
-  private inPick(gi: number, r: number, c: number): boolean {
-    if (!this.pick || this.pick.group !== gi) return false;
-    const { rows, cols } = span(this.pick);
-    return r >= rows[0] && r <= rows[1] && c >= cols[0] && c <= cols[1];
+  private isRowNodeSelected(gi: number, node: number): boolean {
+    return this.selectedRows?.group === gi && this.selectedRows.nodes.has(node);
   }
 
-  /** ⌘C from the pane: the selected block if it is more than one cell,
-   *  otherwise the whole table, because that is nearly always the intent. */
+  private highlightSelectedRows(gi: number, activeNode: number) {
+    const selected = this.selectedRows?.group === gi ? this.selectedRows.nodes : null;
+    if (!selected) return this.hooks.onHighlight([], true);
+    const ranges: Range[] = this.rowsOf(gi)
+      .filter((row) => selected.has(row.node) && row.node !== activeNode)
+      .map((row) => ({ start: row.start, end: row.end }));
+    const active = this.rowsOf(gi).find((row) => row.node === activeNode && selected.has(row.node));
+    if (active) ranges.push({ start: active.start, end: active.end });
+    this.hooks.onHighlight(ranges, true);
+  }
+
+  private clearRowSelection() {
+    if (!this.selectedRows) return;
+    this.selectedRows = null;
+    this.paintSelection();
+    this.hooks.onHighlight([], true);
+  }
+
+  /** A cell selection or row selection can identify one duplicable row. */
+  private duplicateRowIndex(gi: number): number | null {
+    if (this.selectedRows?.group === gi) {
+      if (this.selectedRows.nodes.size !== 1) return null;
+      const [node] = this.selectedRows.nodes;
+      const row = this.rowsOf(gi).findIndex((candidate) => candidate.node === node);
+      return row < 0 ? null : row;
+    }
+    return this.pick?.group === gi ? this.pick.row : null;
+  }
+
+  private inPick(gi: number, r: number, c: number): boolean {
+    return this.pick?.group === gi && this.pick.row === r && this.pick.col === c;
+  }
+
+  /** ⌘C copies selected rows, or the whole table for a single selected cell. */
   async copyFocused() {
+    if (this.selectedRows) {
+      await this.copyGroup(this.selectedRows.group, true);
+      return;
+    }
     if (!this.pick) {
       const firstTable = this.detail?.groups.findIndex((g) => g.total > 1 && (!this.tableTag || g.tag === this.tableTag)) ?? -1;
       if (firstTable >= 0) await this.copyGroup(firstTable, false);
       return;
     }
-    const { rows, cols } = span(this.pick);
-    const single = rows[0] === rows[1] && cols[0] === cols[1];
-    await this.copyGroup(this.pick.group, this.selectedRow !== null || !single);
+    await this.copyGroup(this.pick.group, false);
   }
 
   private async copyGroup(gi: number, selectionOnly: boolean) {
@@ -446,15 +501,13 @@ export class DetailPane {
 
     // A selection is by definition what is on screen, so it copies from the
     // loaded rows.
-    if (selectionOnly && this.pick && this.pick.group === gi) {
-      const rows = this.rowsOf(gi);
-      const sp = span(this.pick);
-      const cIdx = g.columns.map((_, i) => i).slice(sp.cols[0], sp.cols[1] + 1);
+    if (selectionOnly && this.selectedRows?.group === gi) {
+      const cIdx = g.columns.map((_, i) => i);
       const table: Table = {
         header: cIdx.map((ci) => g.columns[ci].key),
-        rows: rows
-          .slice(sp.rows[0], sp.rows[1] + 1)
-          .map((r) => cIdx.map((ci) => r.cells[ci]?.value ?? "")),
+        rows: this.rowsOf(gi)
+          .filter((row) => this.selectedRows!.nodes.has(row.node))
+          .map((row) => cIdx.map((ci) => row.cells[ci]?.value ?? "")),
       };
       const ok = await copyTable(table);
       this.hooks.onStatus(

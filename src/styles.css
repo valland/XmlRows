@@ -186,7 +186,7 @@ table { border-collapse: separate; border-spacing: 0; font-size: 12px; }
 .attrs tr:hover { background: var(--row-active); }
 .chardata { margin: 0; font: 12px/1.7 var(--mono); white-space: pre-wrap; max-height: 140px; overflow: auto; color: var(--ink); background: var(--panel-2); border: 1px solid var(--rule); border-radius: 7px; padding: 10px 12px; }
 .grid-scroll { max-height: clamp(70px, calc(var(--detail-h) - 85px), 600px); border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
-table.rows { width: 100%; table-layout: auto; }
+table.rows { width: 100%; table-layout: auto; user-select: none; -webkit-user-select: none; }
 table.rows thead th { position: sticky; top: 0; z-index: 1; background: var(--panel-2); border-bottom: 1px solid var(--rule); text-align: left; font-weight: 550; font-size: 10.5px; padding: 9px 12px; cursor: pointer; white-space: nowrap; font-family: var(--mono); color: var(--muted); }
 table.rows thead th:hover { background: var(--accent-soft); color: var(--accent); }
 table.rows thead th.sorted { background: var(--accent-soft); color: var(--accent); }
@@ -195,14 +195,15 @@ table.rows td { height: 32px; padding: 0 12px; border-bottom: 1px solid color-mi
 table.rows tr[data-row]:nth-child(even) td { background: color-mix(in srgb, var(--panel-2) 55%, var(--panel)); }
 table.rows tbody tr:hover td { background: var(--row-active); }
 table.rows tr:last-child td { border-bottom: 0; }
-table.rows td.rownum { color: var(--faint); text-align: center; font: 10px var(--mono); width: 38px; border-right: 1px solid var(--rule); cursor: pointer; }
+table.rows td.rownum { color: var(--faint); text-align: center; font: 10px var(--mono); width: 38px; border-right: 1px solid var(--rule); cursor: pointer; user-select: none; }
 table.rows td.rownum:hover { color: var(--accent); background: var(--accent-soft); }
 th.rownum { width: 38px; text-align: center !important; }
 td.cell { cursor: default; }
 table.rows td.cell.focused { background: var(--focus) !important; box-shadow: inset 0 0 0 1px var(--focus-edge); }
 table.rows td.cell.picked { background: var(--select) !important; }
+table.rows td.cell.focused:has(.cell-edit) { background: var(--panel) !important; box-shadow: inset 0 0 0 2px var(--accent); }
 td.empty-cell::after { content: "—"; color: var(--faint); }
-.cell-edit { width: 100%; font: inherit; border: none; background: var(--panel); color: var(--ink); padding: 0; outline: 2px solid var(--accent); }
+.cell-edit { width: 100%; font: inherit; border: none; background: var(--panel); color: var(--ink); padding: 0; outline: none; }
 .more-note { margin: 9px 0 0; padding: 9px 12px; font-size: 10.5px; color: var(--muted); background: color-mix(in srgb, var(--focus) 18%, var(--panel)); border: 1px solid color-mix(in srgb, var(--focus-edge) 35%, var(--rule)); border-radius: 7px; line-height: 1.8; }
 .more-note code { font-family: var(--mono); font-size: 10px; color: var(--ink); }
 .more-note button { margin-left: 6px; }
@@ -240,14 +241,14 @@ select, #editor .cm-textfield, #editor .cm-button { min-height: 32px; border: 1p
 .ctl select { width: 96px; }
 #editor .cm-button { text-transform: none; }
 
-table.rows td.rownum.row-selected { background: var(--select); color: var(--accent); font-weight: 600; }
+table.rows td.rownum.row-selected { background: var(--select) !important; color: var(--accent); font-weight: 600; }
 
 #unsaved-dialog { max-width: 460px; padding: 24px; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; box-shadow: var(--shadow); }
 #unsaved-dialog::backdrop { background: #0006; }
 #unsaved-dialog h2 { font-size: 16px; margin: 0 0 12px; }
 #unsaved-dialog p { color: var(--muted); margin-bottom: 24px; }
 #unsaved-dialog .actions { justify-content: flex-end; }
-.cell-edit { resize: none; display: block; }
+.cell-edit { resize: none; display: block; user-select: text; -webkit-user-select: text; }
 #tree .more-button { margin: 6px 0; }
 
 #tree .table-entry { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; padding: 10px 12px; margin-bottom: 5px; text-align: left; background: transparent; border-color: transparent; color: var(--sidebar-ink); }

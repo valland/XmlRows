@@ -88,16 +88,18 @@ const tree = new TreePane($("#tree"), (node) => {
 });
 
 const detail = new DetailPane($("#detail-body"), {
-  onHighlight(range, exact) {
+  onHighlight(value, exact) {
+    const ranges = Array.isArray(value) ? value : [value];
+    const active = ranges.at(-1);
     syncing = true;
     view.dispatch({
       effects: [
         setScope.of(null),
-        setFocus.of(exact ? range : null),
-        EditorView.scrollIntoView(clampPos(range.start), { y: "center" }),
+        setFocus.of(exact ? ranges : null),
+        ...(active ? [EditorView.scrollIntoView(clampPos(active.start), { y: "center" })] : []),
       ],
     });
-    if (!exact) revealRange(view, range);
+    if (!exact && active) revealRange(view, active);
     syncing = false;
   },
   readValue: (start, end) => view.state.doc.sliceString(start, end),

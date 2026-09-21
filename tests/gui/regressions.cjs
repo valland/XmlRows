@@ -45,7 +45,13 @@ let backend, browser, server;
     if (cmd === 'save_file') { saveCalls++; if (saveFailure) throw new Error('Simulated save failure'); }
     return invoke(cmd, args);
   });
-  await page.addInitScript(() => { window.__TAURI_INTERNALS__ = { invoke: (cmd, args) => window.__testInvoke(cmd, args) }; });
+  await page.addInitScript(() => {
+    window.__TAURI_INTERNALS__ = { invoke: (cmd, args) => window.__testInvoke(cmd, args) };
+    Object.defineProperty(window, 'ClipboardItem', { value: undefined });
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: async (text) => { window.__copiedText = text; } },
+    });
+  });
   await page.goto(url);
   await page.waitForSelector('table.rows td.cell');
   assert.equal(await page.locator('#dirty-mark').isVisible(), false, 'opening a document should not mark it dirty');
@@ -85,6 +91,12 @@ let backend, browser, server;
   await show(`<root>\n${'<!-- spacer -->\n'.repeat(150)}<row><name>${long}</name></row><row><name>Second</name></row></root>`);
   await cell().dblclick();
   assert.equal(await page.locator('.cell-edit').inputValue(), long, 'edit full text including whitespace and Unicode');
+  assert.equal(await page.locator('.cell-edit').evaluate((el) => getComputedStyle(el).outlineStyle), 'none');
+  assert.equal(
+    await page.locator('.cell-edit').evaluate((el) => getComputedStyle(el).backgroundColor),
+    await page.locator('.cell-edit').evaluate((el) => getComputedStyle(el.parentElement).backgroundColor),
+    'editing uses one consistent cell background',
+  );
   await page.waitForTimeout(100);
   const scroll = await page.locator('.cm-scroller').evaluate(e => e.scrollTop);
   await page.locator('.cell-edit').fill(long + 'X');
@@ -234,13 +246,70 @@ let backend, browser, server;
   assert.equal(await page.locator('.cm-scope, .cm-focus').count(), 0);
   console.log('PASS table selection navigates without highlighting; row/cell clicks highlight their XML; editor caret selects only the table cell');
 
+  await show('<root><row><name>one</name></row><row><name>two</name></row><row><name>three</name></row></root>');
+  for (let row = 0; row < 3; row++) {
+    await page.locator(`[data-highlight-row="0:${row}"]`).click();
+    assert.equal(
+      await page.locator(`[data-highlight-row="0:${row}"]`).evaluate((el) => getComputedStyle(el).backgroundColor),
+      await page.locator(`[data-cell="0:${row}:0"]`).evaluate((el) => getComputedStyle(el).backgroundColor),
+      `row ${row + 1} number uses the same highlight as its cells`,
+    );
+  }
+  console.log('PASS row-number highlight is consistent across odd and even table stripes');
+
+  await page.locator('[data-cell="0:0:0"]').click();
+  await page.locator('[data-cell="0:2:0"]').click({ modifiers: ['Shift'] });
+  assert.equal(await page.locator('td.cell.focused').count(), 1);
+  assert.equal(await page.locator('td.cell.picked').count(), 0, 'Shift-click does not create a multi-cell selection');
+
+  await page.locator('[data-highlight-row="0:0"]').click();
+  await page.locator('[data-highlight-row="0:1"]').click({ modifiers: ['Shift'] });
+  const selectedXml = (await page.locator('.cm-focus').allTextContents()).join('');
+  assert.ok(selectedXml.includes('<row><name>one</name></row>'));
+  assert.ok(selectedXml.includes('<row><name>two</name></row>'));
+  assert.ok(!selectedXml.includes('<row><name>three</name></row>'), 'only selected rows are highlighted in XML');
+  await page.locator('[data-copy="0"]').click();
+  await page.waitForFunction(() => window.__copiedText?.includes('one'));
+  const selectedRowsCopy = await page.evaluate(() => window.__copiedText);
+  assert.ok(selectedRowsCopy.includes('one') && selectedRowsCopy.includes('two'));
+  assert.ok(!selectedRowsCopy.includes('three'), 'Copy button excludes unselected rows');
+  assert.equal(await page.locator('[data-highlight-row].row-selected').count(), 2, 'Copy preserves the row selection');
+  await page.locator('.group-heading h2').click();
+  assert.equal(await page.locator('[data-highlight-row].row-selected').count(), 0);
+  assert.equal(await page.locator('.cm-focus').count(), 0, 'clicking outside the table clears XML highlights');
+  console.log('PASS cell selection stays singular; Copy and XML highlights respect selected rows; outside click clears selection');
+
+  const dragStart = await page.locator('[data-cell="0:0:0"]').boundingBox();
+  const dragEnd = await page.locator('[data-cell="0:2:0"]').boundingBox();
+  assert.ok(dragStart && dragEnd);
+  await page.mouse.move(dragStart.x + dragStart.width / 2, dragStart.y + dragStart.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dragEnd.x + dragEnd.width / 2, dragEnd.y + dragEnd.height / 2, { steps: 8 });
+  await page.mouse.up();
+  assert.equal(await page.evaluate(() => window.getSelection()?.toString() ?? ''), '');
+  assert.equal(await page.locator('[data-cell="0:1:0"]').evaluate((el) => getComputedStyle(el).userSelect), 'none');
+  console.log('PASS dragging across table cells cannot create a browser text selection');
+
   const firstRow = '<n:row id="a"><n:name>Zebra</n:name><n:details><!-- keep --><![CDATA[a < b]]><n:x flag="yes"/></n:details></n:row>';
   const secondRow = '<n:row id="b"><n:name>Apple</n:name></n:row>';
   const original = `<root xmlns:n="urn:test">\n  ${firstRow}\n  ${secondRow}\n</root>`;
   await show(original);
   assert.equal(await page.locator('[data-duplicate]').isDisabled(), true);
+  await page.locator('[data-highlight-row="0:0"]').click();
+  await page.locator('[data-highlight-row="0:1"]').click({ modifiers: ['Shift'] });
+  assert.equal(await page.locator('[data-highlight-row].row-selected').count(), 2);
+  assert.equal(await page.locator('[data-duplicate]').isDisabled(), true, 'multiple rows cannot be duplicated as one row');
+  await page.locator('[data-highlight-row="0:0"]').click({ modifiers: [modifier] });
+  assert.equal(await page.locator('[data-highlight-row].row-selected').count(), 1);
+  assert.equal(await page.locator('[data-duplicate]').isDisabled(), false);
+  assert.equal(
+    await page.locator('[data-highlight-row="0:1"]').evaluate((el) => getComputedStyle(el).backgroundColor),
+    await page.locator('[data-cell="0:1:0"]').evaluate((el) => getComputedStyle(el).backgroundColor),
+    'selected row number uses the same highlight as its cells on striped rows',
+  );
   await page.locator('th[data-sort]').filter({hasText:'n:name'}).click();
   await page.waitForSelector('th.sorted');
+  assert.equal(await page.locator('[data-highlight-row="0:0"]').getAttribute('class'), 'rownum row-selected', 'row selection follows its XML node when sorted');
   await page.locator('td.cell').filter({hasText:/^Zebra$/}).click();
   await page.locator('[data-duplicate]').click();
   await page.waitForFunction(() => document.querySelectorAll('tr[data-row]').length === 3);
@@ -273,7 +342,7 @@ let backend, browser, server;
   await page.locator('[data-duplicate]').click();
   await page.waitForSelector('[data-highlight-row="0:500"].row-selected');
   assert.equal((await invoke('document_info')).errors.length, 0);
-  console.log('PASS duplicate selected row after original XML, preserves namespaces/comments/CDATA, sorted selection, new-row edit, undo/redo, self-closing rows and row-limit boundary');
+  console.log('PASS multi-row range/toggle selection, sorted selection, duplicate row, namespaces/comments/CDATA, new-row edit, undo/redo, self-closing rows and row-limit boundary');
   assert.deepEqual(errors, []);
 })().catch(err => { console.error(err); process.exitCode = 1; }).finally(async () => {
   await browser?.close(); backend?.kill(); server?.kill(); rmSync(temp, { recursive: true, force: true });
