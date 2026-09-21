@@ -1,11 +1,11 @@
-XMLRows — dependency license notices
+XmlRows — dependency license notices
 
 Copyright in the dependencies remains with their respective authors.
 These notices include runtime and Rust build dependencies for the build host.
 Other target platforms require regenerating this file on that target.
 
 The local xmlcore crate is separately designated MIT in its Cargo.toml.
-XMLRows and xmlcore are MIT-licensed; dependencies retain their own licenses.
+XmlRows and xmlcore are MIT-licensed; dependencies retain their own licenses.
 
 
 ========================================================================
@@ -44551,4 +44551,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-

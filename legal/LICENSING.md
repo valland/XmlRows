@@ -1,6 +1,6 @@
-# XMLRows licensing
+# XmlRows licensing
 
-XMLRows is free and open-source software under the MIT License in
+XmlRows is free and open-source software under the MIT License in
 [LICENSE.txt](../LICENSE.txt).
 Created by Martin Valland. Copyright © 2026 Bråtet Software AS.
 

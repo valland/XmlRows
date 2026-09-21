@@ -20,15 +20,15 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/xmlrows-dark.png" />
   <source media="(prefers-color-scheme: light)" srcset="docs/images/xmlrows-light.png" />
-  <img src="docs/images/xmlrows-dark.png" alt="XMLRows showing an orders table, its XML source and the table navigator, with a selected value linked to its source location." width="1440" />
+  <img src="docs/images/xmlrows-dark.png" alt="XmlRows showing an orders table, its XML source and the table navigator, with a selected value linked to its source location." width="1440" />
 </picture>
 
-*The XMLRows interface with sample order data. The screenshot follows your GitHub theme.*
+*The XmlRows interface with sample order data. The screenshot follows your GitHub theme.*
 
 ## Find the data inside the markup
 
 XML is good at describing structure. Reading hundreds of repeated records by
-hand is another matter. XMLRows turns repeated elements into tables so you can
+hand is another matter. XmlRows turns repeated elements into tables so you can
 compare values, spot differences and work with the data while keeping the
 original XML close at hand.
 
@@ -93,7 +93,7 @@ npm run tauri -- build --bundles app,dmg
 ```
 
 Build output is written under `src-tauri/target/release/bundle/`. Open the DMG
-and drag **XMLRows** to **Applications**. Current builds are not Developer ID
+and drag **XmlRows** to **Applications**. Current builds are not Developer ID
 signed or notarized, so macOS may require explicit approval to open them.
 The app icons are already included in the repository.
 
@@ -125,7 +125,7 @@ resize the panes. Table settings control depth, displayed rows and columns.
 
 ## Current scope
 
-XMLRows is an early desktop application. A few boundaries matter:
+XmlRows is an early desktop application. A few boundaries matter:
 
 - **XML only today.** JSON support is not implemented.
 - **Source editing, not schema validation.** The parser reports many syntax
@@ -182,7 +182,7 @@ or table issue, include a small, anonymized XML example and the expected result.
 
 Created by **Martin Valland**. Copyright © 2026 **Bråtet Software AS**.
 
-XMLRows and `xmlcore` are released under the [MIT License](LICENSE.txt).
+XmlRows and `xmlcore` are released under the [MIT License](LICENSE.txt).
 You may use, modify and redistribute them, including commercially, while
 retaining the required copyright and license notices.
 

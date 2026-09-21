@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-sections = ["XMLRows — dependency license notices\n\nCopyright in the dependencies remains with their respective authors.\nThese notices include runtime and Rust build dependencies for the build host.\nOther target platforms require regenerating this file on that target.\n\nThe local xmlcore crate is separately designated MIT in its Cargo.toml.\nXMLRows and xmlcore are MIT-licensed; dependencies retain their own licenses.\n"]
+sections = ["XmlRows — dependency license notices\n\nCopyright in the dependencies remains with their respective authors.\nThese notices include runtime and Rust build dependencies for the build host.\nOther target platforms require regenerating this file on that target.\n\nThe local xmlcore crate is separately designated MIT in its Cargo.toml.\nXmlRows and xmlcore are MIT-licensed; dependencies retain their own licenses.\n"]
 missing = []
 count = 0
 

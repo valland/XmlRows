@@ -1,6 +1,6 @@
 # Technical architecture
 
-This document describes the XMLRows implementation as of September 20,
+This document describes the XmlRows implementation as of September 20,
 2026. It covers the desktop application, XML core and `xmlrows` CLI.
 
 ## Overview

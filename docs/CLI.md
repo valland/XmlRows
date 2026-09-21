@@ -1,4 +1,4 @@
-# XMLRows command-line guide
+# XmlRows command-line guide
 
 The same engine without the desktop. Use it to check whether a document parses,
 see what shape it has, and pull a repeated group out as CSV.
