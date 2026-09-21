@@ -307,8 +307,36 @@ let backend, browser, server;
   await page.locator('.group-heading h2').click();
   assert.equal(await page.locator('[data-highlight-row].row-selected').count(), 0);
   assert.equal(await page.locator('.cm-focus').count(), 0, 'clicking outside the table clears XML highlights');
-  console.log('PASS cell selection stays singular; Copy and XML highlights respect selected rows; outside click clears selection');
 
+  await page.locator('[data-highlight-row="0:0"]').click();
+  await page.locator('[data-highlight-row="0:2"]').click({ modifiers: [modifier] });
+  assert.equal(await page.locator('#btn-select-xml').isDisabled(), true, 'disjoint rows cannot become one editor selection');
+  await page.locator('[data-select-all="0"]').click();
+  assert.equal(await page.locator('[data-highlight-row].row-selected').count(), 3, '# selects all rows');
+  assert.equal(await page.locator('[data-select-all="0"]').getAttribute('class'), 'rownum', '# keeps its normal header style');
+  await page.locator('[data-select-all="0"]').click();
+  assert.equal(await page.locator('[data-highlight-row].row-selected').count(), 0, '# clears an all-row selection');
+  await page.locator('[data-select-all="0"]').click();
+  assert.equal(await page.locator('#btn-select-xml').isEnabled(), true);
+  await page.locator('#btn-select-xml').click();
+  const xmlSelections = await page.evaluate(async () => {
+    const { EditorView } = await import('/node_modules/.vite/deps/@codemirror_view.js');
+    const editor = EditorView.findFromDOM(document.querySelector('.cm-editor'));
+    return editor.state.selection.ranges.map(({from, to}) => editor.state.sliceDoc(from, to));
+  });
+  assert.deepEqual(xmlSelections, ['<row><name>one</name></row><row><name>two</name></row><row><name>three</name></row>']);
+  assert.ok(await page.locator('.cm-content').evaluate(e => e.contains(document.activeElement) || e === document.activeElement));
+  await page.keyboard.press('Backspace');
+  await page.waitForFunction(async () => {
+    const text = await window.__testInvoke('document_text', {});
+    return text === '<root></root>';
+  });
+  await page.keyboard.press(`${modifier}+z`);
+  await page.waitForFunction(async () => (await window.__testInvoke('document_text', {})).includes('<name>three</name>'));
+  await page.waitForSelector('[data-highlight-row="0:2"]');
+  console.log('PASS # toggles all rows; Select highlighted XML accepts only contiguous rows and deletes them as one selection');
+
+  await page.locator('[data-cell="0:0:0"]').click();
   const dragStart = await page.locator('[data-cell="0:0:0"]').boundingBox();
   const dragEnd = await page.locator('[data-cell="0:2:0"]').boundingBox();
   assert.ok(dragStart && dragEnd);

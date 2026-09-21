@@ -7,7 +7,7 @@ import { EditorView } from "@codemirror/view";
 import { openSearchPanel } from "@codemirror/search";
 import { icon, mountIcons } from "./icons";
 import { open as openDialog, save as saveDialog, message } from "@tauri-apps/plugin-dialog";
-import { api, defaultOpts, type DocInfo, type TableOpts } from "./ipc";
+import { api, defaultOpts, type DocInfo, type Range, type TableOpts } from "./ipc";
 import { createEditor, editable, revealRange, setFocus, setScope, setProblems } from "./editor";
 import { TreePane, esc } from "./tree";
 import { DetailPane } from "./table";
@@ -65,6 +65,7 @@ let documentVersion = 0;
 let tableEditing = false;
 let flushTask: Promise<void> | null = null;
 let opening = false;
+let highlightedXmlRange: Range | null = null;
 
 /** The three panes all react to each other, so every programmatic update sets
  *  this first. Without it, selecting in the tree moves the caret, which
@@ -93,6 +94,7 @@ const detail = new DetailPane($("#detail-body"), {
     const active = ranges.at(-1);
     syncing = true;
     view.dispatch({
+      ...(active ? { selection: { anchor: clampPos(active.start) } } : {}),
       effects: [
         setScope.of(null),
         setFocus.of(exact ? ranges : null),
@@ -101,6 +103,14 @@ const detail = new DetailPane($("#detail-body"), {
     });
     if (!exact && active) revealRange(view, active);
     syncing = false;
+  },
+  onRowSelectionChange(range, selected) {
+    highlightedXmlRange = range;
+    const button = $<HTMLButtonElement>("#btn-select-xml");
+    button.disabled = !range;
+    button.title = range
+      ? `Select the highlighted XML for ${selected.toLocaleString()} ${selected === 1 ? "row" : "contiguous rows"}`
+      : selected ? "Selected rows must be contiguous in the XML source" : "Select one or more contiguous table rows first";
   },
   readValue: (start, end) => view.state.doc.sliceString(start, end),
   async onEdit(start, end, value) {
@@ -153,6 +163,36 @@ const detail = new DetailPane($("#detail-body"), {
   onExpandChange: (expandRepeated) => setOpts({ expandRepeated }),
   opts: () => opts,
 });
+
+function selectHighlightedXml() {
+  const range = highlightedXmlRange;
+  if (!range) return;
+  const doc = view.state.doc;
+  let from = clampPos(range.start);
+  let to = clampPos(range.end);
+  const firstLine = doc.lineAt(from);
+  const lastLine = doc.lineAt(Math.max(from, to - 1));
+  const before = doc.sliceString(firstLine.from, from);
+  const after = doc.sliceString(to, lastLine.to);
+  if (/^\s*$/.test(before) && /^\s*$/.test(after)) {
+    from = firstLine.from;
+    to = lastLine.to < doc.length ? lastLine.to + 1 : lastLine.to;
+  }
+  syncing = true;
+  view.dispatch({
+    selection: { anchor: from, head: to },
+    effects: [
+      setScope.of(null),
+      setFocus.of(null),
+      EditorView.scrollIntoView(from, { y: "center" }),
+    ],
+  });
+  syncing = false;
+  view.focus();
+  flashStatus("Selected highlighted XML in the source editor.");
+}
+
+$<HTMLButtonElement>("#btn-select-xml").onclick = selectHighlightedXml;
 
 /** Show a temporary message while preserving persistent document status. */
 let statusTimer: number | undefined;

@@ -6,6 +6,14 @@ versions below 1.0.0.
 
 ## Unreleased
 
+## 0.1.3 - 2026-09-21
+
+### Added
+
+- `Select highlighted XML` in the source toolbar turns one row or a contiguous
+  range of highlighted table rows into a real editor selection.
+- Clicking `#` selects or clears all displayed table rows.
+
 ### Fixed
 
 - Formatting XML now preserves the selected table and keeps the table controls

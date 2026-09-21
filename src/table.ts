@@ -41,6 +41,7 @@ export class DetailPane {
     private host: HTMLElement,
     private hooks: {
       onHighlight: (r: Range | Range[], exact: boolean) => void;
+      onRowSelectionChange: (range: Range | null, selected: number) => void;
       readValue: (start: number, end: number) => string;
       onDuplicate: (row: Range, rowIndex: number) => Promise<void>;
       onEdit: (start: number, end: number, value: string) => Promise<void>;
@@ -55,7 +56,7 @@ export class DetailPane {
     this.host.addEventListener("dblclick", (e) => this.onDblClick(e));
     document.addEventListener("click", (e) => {
       const target = e.target as HTMLElement | null;
-      if (this.selectedRows && !target?.closest("table.rows") && !target?.closest("[data-copy]")) {
+      if (this.selectedRows && !target?.closest("table.rows") && !target?.closest("[data-copy], #btn-select-xml")) {
         this.clearRowSelection();
       }
     });
@@ -132,6 +133,7 @@ export class DetailPane {
     this.focused = null;
     this.parkSettings();
     this.host.innerHTML = `<div class="empty-state">Select an element in Structure to see its values.</div>`;
+    this.hooks.onRowSelectionChange(null, 0);
   }
 
   private rowsOf(gi: number): Row[] {
@@ -195,7 +197,7 @@ export class DetailPane {
       </div>
       <div class="grid-scroll scroller" data-scroll="${gi}">
         <table class="rows">
-          <thead><tr><th class="rownum" title="Click to select a row · Shift-click for a range · Cmd/Ctrl-click to add or remove">#</th>${head}</tr></thead>
+          <thead><tr><th class="rownum" data-select-all="${gi}" title="Select all displayed rows">#</th>${head}</tr></thead>
           <tbody data-body="${gi}"></tbody>
         </table>
       </div>
@@ -332,6 +334,27 @@ export class DetailPane {
       return;
     }
 
+    const selectAll = target.closest<HTMLElement>("[data-select-all]");
+    if (selectAll) {
+      const gi = Number(selectAll.dataset.selectAll);
+      const rows = this.rowsOf(gi);
+      const current = this.selectedRows?.group === gi ? this.selectedRows.nodes : null;
+      const allSelected = !!current && rows.length > 0 && rows.every((row) => current.has(row.node));
+      this.focused = null;
+      this.pick = null;
+      this.selectedRows = allSelected || !rows.length
+        ? null
+        : { group: gi, nodes: new Set(rows.map((row) => row.node)), anchor: rows[0].node };
+      this.host.focus({ preventScroll: true });
+      this.paintSelection();
+      if (this.selectedRows) this.highlightSelectedRows(gi, rows.at(-1)!.node);
+      else this.hooks.onHighlight([], true);
+      if (this.detail!.groups[gi].truncated && this.selectedRows) {
+        this.hooks.onStatus(`Selected the ${rows.length.toLocaleString()} displayed rows. Raise Maximum rows to include the rest.`);
+      }
+      return;
+    }
+
     const rowNumber = target.closest<HTMLElement>("[data-highlight-row]");
     if (rowNumber) {
       const [gi, ri] = rowNumber.dataset.highlightRow!.split(":").map(Number);
@@ -415,6 +438,20 @@ export class DetailPane {
         ? `Copy ${selected.toLocaleString()} selected ${selected === 1 ? "row" : "rows"}`
         : `Copy all ${this.detail!.groups[group].total.toLocaleString()} rows, including rows beyond the display limit`;
     });
+    this.host.querySelectorAll<HTMLElement>("[data-select-all]").forEach((header) => {
+      const group = Number(header.dataset.selectAll);
+      const rows = this.rowsOf(group);
+      const selected = this.selectedRows?.group === group ? this.selectedRows.nodes : null;
+      const allSelected = !!selected && rows.length > 0 && rows.every((row) => selected.has(row.node));
+      header.title = allSelected ? "Clear row selection" : this.detail!.groups[group].truncated
+        ? `Select all ${rows.length.toLocaleString()} displayed rows`
+        : `Select all ${rows.length.toLocaleString()} rows`;
+    });
+    const selected = this.selectedRows?.nodes.size ?? 0;
+    this.hooks.onRowSelectionChange(
+      this.selectedRows ? this.selectedXmlRange(this.selectedRows.group) : null,
+      selected,
+    );
   }
 
   private async applySort(gi: number, ci: number) {
@@ -446,6 +483,21 @@ export class DetailPane {
 
   private isRowNodeSelected(gi: number, node: number): boolean {
     return this.selectedRows?.group === gi && this.selectedRows.nodes.has(node);
+  }
+
+  /** A real editor selection must be one source range. Table sorting may put
+   *  unrelated source rows next to each other, so test contiguity in the
+   *  document-order group rather than in the displayed order. */
+  private selectedXmlRange(gi: number): Range | null {
+    const selected = this.selectedRows?.group === gi ? this.selectedRows.nodes : null;
+    const rows = this.detail?.groups[gi]?.rows;
+    if (!selected?.size || !rows) return null;
+    const indices = rows.flatMap((row, index) => selected.has(row.node) ? [index] : []);
+    if (indices.length !== selected.size) return null;
+    const first = indices[0];
+    const last = indices.at(-1)!;
+    if (last - first + 1 !== indices.length) return null;
+    return { start: rows[first].start, end: rows[last].end };
   }
 
   private highlightSelectedRows(gi: number, activeNode: number) {
