@@ -10,6 +10,8 @@
 
 <p align="center">
   <a href="#get-started">Get started</a> ·
+  <a href="https://github.com/valland/XmlRows/releases">Releases</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
   <a href="docs/CLI.md">CLI guide</a> ·
   <a href="ARCHITECTURE.md">Architecture</a> ·
   <a href="LICENSE.txt">MIT license</a>
@@ -75,8 +77,9 @@ binary built below.
 
 ### Desktop app
 
-The current desktop build targets macOS. An Apple Silicon `.dmg` can be built
-locally; release binaries are not currently attached to this repository.
+The current desktop build targets macOS on Apple Silicon. Download the latest
+installer from [GitHub Releases](https://github.com/valland/XmlRows/releases/latest),
+open the DMG and drag **XmlRows** to **Applications**.
 
 To build from source, install Node.js/npm, Rust/Cargo and the macOS build tools
 (Xcode Command Line Tools), then run these commands from the repository root:
@@ -92,9 +95,9 @@ Build an installable application and disk image:
 npm run tauri -- build --bundles app,dmg
 ```
 
-Build output is written under `src-tauri/target/release/bundle/`. Open the DMG
-and drag **XmlRows** to **Applications**. Current builds are not Developer ID
-signed or notarized, so macOS may require explicit approval to open them.
+Build output is written under `src-tauri/target/release/bundle/`. Current builds
+are not Developer ID signed or notarized, so macOS may require explicit approval
+to open them.
 The app icons are already included in the repository.
 
 ### Command-line tool
