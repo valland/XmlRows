@@ -89,13 +89,26 @@ let backend, browser, server;
   }
   const long = '  ' + 'ø😀'.repeat(320) + '\nlast line  ';
   await show(`<root>\n${'<!-- spacer -->\n'.repeat(150)}<row><name>${long}</name></row><row><name>Second</name></row></root>`);
+  await cell().click();
+  const cellColorBeforeEdit = await cell().evaluate((el) => getComputedStyle(el).backgroundColor);
+  const cellBorderBeforeEdit = await cell().evaluate((el) => getComputedStyle(el).boxShadow);
+  const cellBoxBeforeEdit = await cell().boundingBox();
   await cell().dblclick();
+  const cellBoxDuringEdit = await page.locator('.cell-edit').locator('..').boundingBox();
+  assert.ok(cellBoxBeforeEdit && cellBoxDuringEdit);
+  assert.ok(Math.abs(cellBoxBeforeEdit.width - cellBoxDuringEdit.width) < 0.5, 'editing preserves cell width');
+  assert.ok(Math.abs(cellBoxBeforeEdit.height - cellBoxDuringEdit.height) < 0.5, 'editing preserves cell height');
   assert.equal(await page.locator('.cell-edit').inputValue(), long, 'edit full text including whitespace and Unicode');
   assert.equal(await page.locator('.cell-edit').evaluate((el) => getComputedStyle(el).outlineStyle), 'none');
   assert.equal(
     await page.locator('.cell-edit').evaluate((el) => getComputedStyle(el).backgroundColor),
-    await page.locator('.cell-edit').evaluate((el) => getComputedStyle(el.parentElement).backgroundColor),
-    'editing uses one consistent cell background',
+    cellColorBeforeEdit,
+    'editing preserves the selected cell color',
+  );
+  assert.equal(
+    await page.locator('.cell-edit').evaluate((el) => getComputedStyle(el).boxShadow),
+    cellBorderBeforeEdit,
+    'the visible editor preserves the selected cell border',
   );
   await page.waitForTimeout(100);
   const scroll = await page.locator('.cm-scroller').evaluate(e => e.scrollTop);

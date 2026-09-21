@@ -570,11 +570,15 @@ export class DetailPane {
     if (!c) return;
 
     const original = this.hooks.readValue(c.start, c.end);
+    const measure = document.createElement("span");
+    measure.className = "cell-edit-measure";
+    measure.textContent = cell.textContent;
     const input = document.createElement("textarea");
     input.rows = 1;
     input.className = "cell-edit";
     input.value = original;
-    cell.replaceChildren(input);
+    cell.classList.add("editing");
+    cell.replaceChildren(measure, input);
     this.paintSelection();
     input.focus();
     input.select();

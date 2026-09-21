@@ -201,9 +201,10 @@ th.rownum { width: 38px; text-align: center !important; }
 td.cell { cursor: default; }
 table.rows td.cell.focused { background: var(--focus) !important; box-shadow: inset 0 0 0 1px var(--focus-edge); }
 table.rows td.cell.picked { background: var(--select) !important; }
-table.rows td.cell.focused:has(.cell-edit) { background: var(--panel) !important; box-shadow: inset 0 0 0 2px var(--accent); }
+table.rows td.cell.editing { position: relative; }
+.cell-edit-measure { visibility: hidden; }
 td.empty-cell::after { content: "—"; color: var(--faint); }
-.cell-edit { width: 100%; font: inherit; border: none; background: var(--panel); color: var(--ink); padding: 0; outline: none; }
+.cell-edit { position: absolute; inset: 0; width: 100%; height: 100%; font: inherit; border: none; background: var(--focus); color: var(--ink); padding: 7px 12px; outline: none; box-shadow: inset 0 0 0 1px var(--focus-edge); overflow: hidden; }
 .more-note { margin: 9px 0 0; padding: 9px 12px; font-size: 10.5px; color: var(--muted); background: color-mix(in srgb, var(--focus) 18%, var(--panel)); border: 1px solid color-mix(in srgb, var(--focus-edge) 35%, var(--rule)); border-radius: 7px; line-height: 1.8; }
 .more-note code { font-family: var(--mono); font-size: 10px; color: var(--ink); }
 .more-note button { margin-left: 6px; }
