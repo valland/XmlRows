@@ -96,6 +96,14 @@ pub struct DocInfo {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+struct FormatResult {
+    text: String,
+    info: DocInfo,
+    selected_id: Option<u32>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Diagnostic {
     start: u32,
     end: u32,
@@ -585,6 +593,46 @@ fn node_range(id: u32, state: State<AppState>) -> Option<Range> {
     Some(s.range(s.doc.arena.start[id as usize], s.doc.arena.end[id as usize]))
 }
 
+/// Identify an element by its ordinal among element siblings at every level.
+/// Unlike arena IDs and byte offsets, this route survives whitespace-only
+/// changes made by the formatter.
+fn element_route(a: &xmlcore::arena::Arena, node: u32) -> Option<Vec<usize>> {
+    if node as usize >= a.len() || a.kind[node as usize] != NodeKind::Element {
+        return None;
+    }
+    let mut nodes = a.ancestors(node);
+    nodes.push(node);
+    let mut route = Vec::with_capacity(nodes.len());
+    for (depth, &current) in nodes.iter().enumerate() {
+        let position = if depth == 0 {
+            a.roots
+                .iter()
+                .copied()
+                .filter(|&id| a.kind[id as usize] == NodeKind::Element)
+                .position(|id| id == current)
+        } else {
+            a.element_children(nodes[depth - 1])
+                .position(|id| id == current)
+        }?;
+        route.push(position);
+    }
+    Some(route)
+}
+
+fn resolve_element_route(a: &xmlcore::arena::Arena, route: &[usize]) -> Option<u32> {
+    let (&root, rest) = route.split_first()?;
+    let mut current = a
+        .roots
+        .iter()
+        .copied()
+        .filter(|&id| a.kind[id as usize] == NodeKind::Element)
+        .nth(root)?;
+    for &position in rest {
+        current = a.element_children(current).nth(position)?;
+    }
+    Some(current)
+}
+
 /// Sort a group by column, returning row node ids in order. The document is
 /// untouched — sorting is a way of looking, not an edit.
 #[tauri::command]
@@ -607,9 +655,24 @@ fn sort_group(
 }
 
 #[tauri::command]
-fn format_document(indent: String, state: State<AppState>) -> String {
-    let s = lock(&state);
-    s.doc.pretty(&indent)
+fn format_document(
+    indent: String,
+    selected_id: Option<u32>,
+    state: State<AppState>,
+) -> FormatResult {
+    let mut s = lock(&state);
+    let route = selected_id.and_then(|id| element_route(&s.doc.arena, id));
+    let text = s.doc.pretty(&indent);
+    s.doc = Document::parse(text.clone());
+    s.rev += 1;
+    s.dirty = true;
+    let selected_id = route.and_then(|route| resolve_element_route(&s.doc.arena, &route));
+    let info = s.info();
+    FormatResult {
+        text,
+        info,
+        selected_id,
+    }
 }
 
 #[tauri::command]
@@ -759,6 +822,17 @@ fn _unused(_: u32) {
 #[cfg(test)]
 mod gui_table_tests {
     use super::*;
+
+    #[test]
+    fn element_route_survives_formatting_whitespace() {
+        let doc = Document::parse("<root><other/><wrapper><row>A</row><row>B</row></wrapper></root>".into());
+        let wrapper = doc.arena.element_at_byte(doc.text.find("<wrapper").unwrap() as u32 + 1).unwrap();
+        let route = element_route(&doc.arena, wrapper).unwrap();
+        let formatted = Document::parse(doc.pretty("  "));
+        let restored = resolve_element_route(&formatted.arena, &route).unwrap();
+        assert_eq!(formatted.arena.tag(restored), "wrapper");
+        assert_ne!(wrapper, restored, "formatting should change the arena ID in this fixture");
+    }
 
     #[test]
     fn source_position_resolves_outer_table_and_row() {

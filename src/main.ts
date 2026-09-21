@@ -510,17 +510,31 @@ async function doSave(): Promise<boolean> {
 async function doFormat() {
   if (info.readOnly) return;
   await flush();
-  const formatted = await api.formatDocument("  ");
+  window.clearTimeout(caretTimer);
+  const tableTag = selectedTableTag;
+  const result = await api.formatDocument("  ", selectedId);
+  selectionRequest++;
+  documentVersion++;
   syncing = true;
   view.dispatch({
-    changes: { from: 0, to: view.state.doc.length, insert: formatted },
+    changes: { from: 0, to: view.state.doc.length, insert: result.text },
   });
   syncing = false;
   pending.length = 0;
-  info = await api.setText(formatted);
+  info = result.info;
+  selectedId = null;
   tree.reset(info.roots);
-  clearDetail();
   paintDocState();
+  const restored = result.selectedId ?? info.suggested;
+  if (restored !== null) {
+    await selectNode(restored, {
+      preserveSourcePosition: true,
+      tableTag: result.selectedId !== null ? tableTag ?? undefined : undefined,
+    });
+  } else {
+    selectedTableTag = null;
+    clearDetail();
+  }
 }
 
 async function doLocate() {

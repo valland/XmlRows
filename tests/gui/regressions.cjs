@@ -198,6 +198,23 @@ let backend, browser, server;
   assert.equal(await page.locator('.table-entry').count(), 0);
   console.log('PASS table navigator names, row counts, separate sibling groups, hidden nested tables and selection after editing');
 
+  await invoke('open_file', { path: firstPath });
+  await invoke('set_text', { text: '<root><other><x>A</x><x>B</x></other><wrapper><row><name>One</name></row><row><name>Two</name></row></wrapper></root>' });
+  await page.reload();
+  await page.locator('#tables-only').check();
+  await page.waitForFunction(() => document.querySelectorAll('.table-entry').length === 2);
+  await page.locator('.table-entry').filter({hasText:/^row2 rows$/}).click();
+  await page.waitForFunction(() => document.querySelector('#detail-title').textContent.startsWith('row'));
+  await page.locator('#btn-format').click();
+  await page.waitForFunction(() => document.querySelector('#detail-title').textContent.startsWith('row') && document.querySelectorAll('tr[data-row]').length === 2);
+  assert.equal(await page.locator('#btn-detail').isEnabled(), true, 'formatting keeps the table available');
+  assert.equal(await page.locator('#detail-toggle-label').innerText(), 'Hide table');
+  assert.ok((await page.locator('table.rows').innerText()).includes('One'));
+  assert.ok((await invoke('document_text')).includes('\n  <wrapper>'), 'formatting updates the backend document');
+  console.log('PASS formatting preserves the selected table and its availability');
+
+  await show('<root><header>metadata</header><order id="a"><item>edited item</item><item>two</item></order><order id="b"><item>three</item><item>four</item><item>five</item></order><customer>A</customer><customer>B</customer><customer>C</customer></root>');
+
   async function caretAt(value) {
     await page.evaluate(async (value) => {
       const { EditorView } = await import('/node_modules/.vite/deps/@codemirror_view.js');

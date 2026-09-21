@@ -28,7 +28,7 @@ fn main(){
    "node_range"=>serde_json::to_value(node_range(id,State(&state))),
    "locate"=>serde_json::to_value(locate(a["offset"].as_u64().unwrap() as u32,State(&state))),
    "sort_group"=>serde_json::to_value(sort_group(id,a["group"].as_u64().unwrap() as usize,a["column"].as_u64().unwrap() as usize,a["ascending"].as_bool().unwrap(),opts,State(&state))),
-   "format_document"=>serde_json::to_value(format_document(a["indent"].as_str().unwrap().into(),State(&state))),
+   "format_document"=>serde_json::to_value(format_document(a["indent"].as_str().unwrap().into(),a["selectedId"].as_u64().map(|id|id as u32),State(&state))),
    "open_file"=>serde_json::to_value(open_file(a["path"].as_str().unwrap().into(),State(&state)).unwrap()),
    "save_file"=>match save_file(a["path"].as_str().map(String::from),State(&state)) { Ok(info)=>serde_json::to_value(info), Err(e)=>Ok(serde_json::json!({"__error":e})) },
    "export_group"=>serde_json::to_value(export_group(id,a["group"].as_u64().unwrap() as usize,a["sortColumn"].as_u64().map(|x|x as usize),a["ascending"].as_bool().unwrap(),opts,State(&state)).unwrap()),

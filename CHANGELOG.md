@@ -6,6 +6,11 @@ versions below 1.0.0.
 
 ## Unreleased
 
+### Fixed
+
+- Formatting XML now preserves the selected table and keeps the table controls
+  available.
+
 ## 0.1.2 - 2026-09-21
 
 ### Added
@@ -44,4 +49,3 @@ versions below 1.0.0.
   views.
 - In-place cell editing, sorting, spreadsheet copy and row duplication.
 - Rust command-line interface for inspecting and exporting XML data.
-

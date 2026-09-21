@@ -142,6 +142,12 @@ export interface TableSummary {
   path: string;
 }
 
+export interface FormatResult {
+  text: string;
+  info: DocInfo;
+  selectedId: number | null;
+}
+
 export const api = {
   tableList: (offset: number, limit: number) => invoke<{ tables: TableSummary[]; total: number }>("table_list", { offset, limit }),
   openFile: (path: string) => invoke<DocInfo>("open_file", { path }),
@@ -169,8 +175,8 @@ export const api = {
     opts: TableOpts,
   ) =>
     invoke<Export>("export_group", { id, group, sortColumn, ascending, opts }),
-  formatDocument: (indent: string) =>
-    invoke<string>("format_document", { indent }),
+  formatDocument: (indent: string, selectedId: number | null) =>
+    invoke<FormatResult>("format_document", { indent, selectedId }),
   documentInfo: () => invoke<DocInfo>("document_info"),
   documentText: () => invoke<string>("document_text"),
   saveFile: (path: string | null) => invoke<DocInfo>("save_file", { path }),
