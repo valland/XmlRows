@@ -6,6 +6,14 @@ versions below 1.0.0.
 
 ## Unreleased
 
+### Added
+
+- Release disk images are built by GitHub Actions and published with a signed
+  build provenance attestation, a SHA-256 checksum file and an attestation
+  bundle for offline checking. `gh attestation verify` confirms that a download
+  was built from this repository's published source. The README explains how to
+  run the check.
+
 ## 0.1.3 - 2026-09-21
 
 ### Added

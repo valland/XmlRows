@@ -87,6 +87,19 @@ let backend, browser, server;
     await page.locator('.cell-edit').press('Enter');
     await page.waitForFunction(() => !document.querySelector('.cell-edit'));
   }
+  // render() parks the options panel in a hidden container and setDetailCollapsed()
+  // closes it, so a render landing after the click leaves #opt-rows invisible.
+  async function openTableOptions() {
+    const summary = page.locator('#table-options summary');
+    const select = page.locator('#opt-rows');
+    for (let attempt = 0; attempt < 20; attempt++) {
+      if (await select.isVisible()) return;
+      await summary.waitFor({ state: 'visible' });
+      await summary.click();
+      await page.waitForTimeout(100);
+    }
+    throw new Error('The table options panel did not stay open');
+  }
   const long = '  ' + 'ø😀'.repeat(320) + '\nlast line  ';
   await show(`<root>\n${'<!-- spacer -->\n'.repeat(150)}<row><name>${long}</name></row><row><name>Second</name></row></root>`);
   await cell().click();
@@ -393,10 +406,13 @@ let backend, browser, server;
   await page.waitForFunction(() => document.querySelectorAll('tr[data-row]').length === 3);
   assert.equal(await invoke('document_text'), '<root><row id="a"/><row id="a"/><row id="b"/></root>');
   await show('<root>'+Array.from({length:500},(_,i)=>`<row id="${i}"/>`).join('')+'</root>');
-  await page.locator('#table-options summary').click();
+  await openTableOptions();
   await page.locator('#opt-rows').selectOption('500');
   await page.locator('[data-scroll]').evaluate(e=>{e.scrollTop=e.scrollHeight;});
-  await page.locator('[data-highlight-row="0:499"]').click();
+  await page.waitForSelector('[data-highlight-row="0:499"]');
+  // Dispatched in page: a real click would scroll the virtualised container,
+  // and the scroll listener rewrites tbody, detaching the resolved row.
+  await page.locator('[data-highlight-row="0:499"]').evaluate(el => el.click());
   await page.locator('[data-duplicate]').click();
   await page.waitForSelector('[data-highlight-row="0:500"].row-selected');
   assert.equal((await invoke('document_info')).errors.length, 0);

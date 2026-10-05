@@ -81,6 +81,41 @@ The current desktop build targets macOS on Apple Silicon. Download the latest
 installer from [GitHub Releases](https://github.com/valland/XmlRows/releases/latest),
 open the DMG and drag **XmlRows** to **Applications**.
 
+#### Verify that a download came from this source
+
+Release disk images are built by GitHub Actions, not on a developer machine,
+and each one is published with a signed build provenance attestation. The
+attestation names the repository, the workflow and the exact source commit the
+image was built from, so you can check a download before opening it without
+having to trust whoever uploaded it. With the
+[GitHub CLI](https://cli.github.com) installed:
+
+```sh
+gh attestation verify XmlRows_0.1.3_aarch64.dmg \
+  --repo valland/XmlRows \
+  --signer-workflow valland/XmlRows/.github/workflows/release.yml
+```
+
+Verification succeeds only if the file's digest matches a provenance statement
+signed by that workflow, and it prints the commit the image was built from.
+Pass `--signer-workflow`: without it, a successful check only proves that some
+workflow in the repository signed the image.
+
+Every release also carries a `.sha256` checksum file and a `.sigstore.json`
+attestation bundle, so the same check works without reaching GitHub:
+
+```sh
+shasum -c XmlRows_0.1.3_aarch64.dmg.sha256
+gh attestation verify XmlRows_0.1.3_aarch64.dmg \
+  --bundle XmlRows_0.1.3_aarch64.dmg.sigstore.json \
+  --repo valland/XmlRows
+```
+
+What this does and does not establish: it proves which source commit and which
+workflow produced the image, and the workflow installs only what the committed
+`package-lock.json` and `Cargo.lock` files pin. It is not a reproducible
+build — it does not let you rebuild the image yourself and get identical bytes.
+
 To build from source, install Node.js/npm, Rust/Cargo and the macOS build tools
 (Xcode Command Line Tools), then run these commands from the repository root:
 
@@ -172,6 +207,10 @@ cargo test --manifest-path src-tauri/Cargo.toml --lib
 npx playwright install chromium
 npm run test:gui
 ```
+
+Releases are cut with the procedure in the
+[release guide](docs/RELEASING.md); the downloadable disk image is built and
+attested by GitHub Actions rather than on a developer machine.
 
 GUI tests exercise the actual frontend and Rust command layer through a test
 bridge, with native dialogs stubbed. The README screenshots use the same

@@ -1,0 +1,217 @@
+# Attested release build.
+#
+# The point of this workflow is a verifiable link between the published
+# source and the downloadable disk image. Every run signs a provenance
+# statement that names this repository, this workflow and the exact commit
+# the image was built from, so anyone can check a download without trusting
+# the person who uploaded it:
+#
+#     gh attestation verify XmlRows_<version>_aarch64.dmg \
+#       --repo valland/XmlRows \
+#       --signer-workflow valland/XmlRows/.github/workflows/release.yml
+#
+# Two things protect that link and should not be "optimised" away:
+#
+#   * No dependency or build caching. The Actions cache is writable from any
+#     branch, so a poisoned cache entry could put code into a release that is
+#     not in the published source.
+#   * Locked dependencies. `npm ci` and `cargo fetch --locked` install exactly
+#     what the committed lockfiles pin, and the lockfiles are re-checked after
+#     the build.
+
+name: Release build
+
+on:
+  release:
+    types: [published]
+  # Dry run on a branch: builds, verifies and attests, but touches no release.
+  workflow_dispatch:
+
+# Granted per job instead, so every permission is visible where it is used.
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build, verify and attest
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: write # attach the assets to the release
+      id-token: write # short-lived Sigstore identity for the attestation
+      attestations: write # record the provenance attestation
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - name: Check out the source being attested
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Confirm the runner is Apple Silicon
+        run: |
+          arch="$(uname -m)"
+          echo "runner: $arch, $(sw_vers -productVersion)"
+          if [ "$arch" != "arm64" ]; then
+            echo "::error::The aarch64 disk image needs an arm64 runner, got $arch"
+            exit 1
+          fi
+
+      - name: Check the version agrees across every manifest
+        # The tag arrives through the environment rather than through template
+        # interpolation, so a tag name can never become part of this script.
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          if [ -n "${RELEASE_TAG:-}" ]; then
+            version="$(python3 .github/scripts/check-version.py --tag "$RELEASE_TAG")"
+          else
+            version="$(python3 .github/scripts/check-version.py)"
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "DMG=src-tauri/target/release/bundle/dmg/XmlRows_${version}_aarch64.dmg" >> "$GITHUB_ENV"
+          echo "APP=src-tauri/target/release/bundle/macos/XmlRows.app" >> "$GITHUB_ENV"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Record the build toolchain
+        run: |
+          node --version
+          npm --version
+          rustc --version
+          cargo --version
+          python3 --version
+
+      - name: Install frontend dependencies from the lockfile
+        run: npm ci
+
+      - name: Fetch Rust dependencies from the lockfiles
+        run: |
+          cargo fetch --locked --manifest-path crates/xmlcore/Cargo.toml
+          cargo fetch --locked --manifest-path src-tauri/Cargo.toml
+
+      - name: Type-check and build the frontend
+        run: npm run build
+
+      - name: Run the Rust test suites
+        run: |
+          cargo test --locked --manifest-path crates/xmlcore/Cargo.toml
+          cargo test --locked --manifest-path src-tauri/Cargo.toml --lib
+
+      - name: Type-check the command layer against the core
+        run: python3 tools/check-ipc.py
+
+      - name: Install the test browser
+        run: npx --no playwright install chromium
+
+      - name: Run the GUI regression suite
+        run: npm run test:gui
+
+      - name: Build the application and disk image
+        run: npm run tauri -- build --bundles app,dmg
+
+      - name: Confirm the build changed no lockfile
+        run: |
+          git diff --exit-code -- \
+            package-lock.json \
+            crates/xmlcore/Cargo.lock \
+            src-tauri/Cargo.lock
+
+      - name: Verify the application bundle metadata
+        run: |
+          set -euo pipefail
+          plist="$APP/Contents/Info.plist"
+          read_key() { /usr/libexec/PlistBuddy -c "Print :$1" "$plist"; }
+          display="$(read_key CFBundleDisplayName)"
+          short="$(read_key CFBundleShortVersionString)"
+          build="$(read_key CFBundleVersion)"
+          echo "CFBundleDisplayName        $display"
+          echo "CFBundleShortVersionString $short"
+          echo "CFBundleVersion            $build"
+          fail=0
+          [ "$display" = "XmlRows" ] || { echo "::error::CFBundleDisplayName is '$display', expected XmlRows"; fail=1; }
+          [ "$short" = "$VERSION" ] || { echo "::error::CFBundleShortVersionString is '$short', expected $VERSION"; fail=1; }
+          [ "$build" = "$VERSION" ] || { echo "::error::CFBundleVersion is '$build', expected $VERSION"; fail=1; }
+          exit $fail
+
+      - name: Verify the disk image
+        run: |
+          set -euo pipefail
+          if [ ! -f "$DMG" ]; then
+            echo "::error::No disk image at $DMG"
+            ls -R src-tauri/target/release/bundle || true
+            exit 1
+          fi
+          hdiutil verify "$DMG"
+
+      - name: Compute the final SHA-256
+        run: |
+          set -euo pipefail
+          # Computed after the last build, never carried over from an earlier one.
+          ( cd "$(dirname "$DMG")" && shasum -a 256 "$(basename "$DMG")" > "$(basename "$DMG").sha256" )
+          cat "$DMG.sha256"
+
+      - name: Attest the build provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ env.DMG }}
+
+      # Shipped alongside the image so the provenance can also be checked
+      # offline, with `gh attestation verify --bundle <file>`.
+      - name: Stage the attestation bundle
+        run: cp "${{ steps.attest.outputs.bundle-path }}" "$DMG.sigstore.json"
+
+      - name: Summarise what was built and how to verify it
+        run: |
+          set -euo pipefail
+          name="$(basename "$DMG")"
+          sha="$(cut -d' ' -f1 "$DMG.sha256")"
+          {
+            echo "## XmlRows $VERSION"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Disk image | \`$name\` |"
+            echo "| SHA-256 | \`$sha\` |"
+            echo "| Source commit | \`$GITHUB_SHA\` |"
+            echo "| Built by | \`$GITHUB_WORKFLOW_REF\` |"
+            echo
+            echo "Verify a download against this repository:"
+            echo
+            echo '```sh'
+            echo "gh attestation verify $name \\"
+            echo "  --repo $GITHUB_REPOSITORY \\"
+            echo "  --signer-workflow $GITHUB_REPOSITORY/.github/workflows/release.yml"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the build output
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: XmlRows_${{ env.VERSION }}_aarch64
+          path: |
+            ${{ env.DMG }}
+            ${{ env.DMG }}.sha256
+            ${{ env.DMG }}.sigstore.json
+          if-no-files-found: error
+
+      - name: Attach the attested disk image to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release upload "$RELEASE_TAG" \
+            "$DMG" \
+            "$DMG.sha256" \
+            "$DMG.sigstore.json" \
+            --clobber
